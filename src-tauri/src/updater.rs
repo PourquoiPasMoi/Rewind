@@ -104,3 +104,29 @@ pub async fn install(app: AppHandle, sh: Arc<Shared>, force: bool) -> Result<(),
     // The installer replaces the exe; start the new version.
     app.restart();
 }
+
+#[cfg(test)]
+mod tests {
+    use base64::Engine;
+
+    /// Network test (~3 MB): checks the published release exactly like the updater does.
+    /// `cargo test published_update_verifies -- --ignored --nocapture`
+    #[tokio::test]
+    #[ignore]
+    async fn published_update_verifies() {
+        let b64 = base64::engine::general_purpose::STANDARD;
+        let conf: serde_json::Value = serde_json::from_str(include_str!("../tauri.conf.json")).unwrap();
+        let pubkey = String::from_utf8(b64.decode(conf["plugins"]["updater"]["pubkey"].as_str().unwrap()).unwrap()).unwrap();
+        let endpoint = conf["plugins"]["updater"]["endpoints"][0].as_str().unwrap();
+        let latest: serde_json::Value = reqwest::get(endpoint).await.unwrap().json().await.unwrap();
+        let platform = &latest["platforms"]["windows-x86_64"];
+        let url = platform["url"].as_str().unwrap();
+        let signature = String::from_utf8(b64.decode(platform["signature"].as_str().unwrap()).unwrap()).unwrap();
+        let installer = reqwest::get(url).await.unwrap().bytes().await.unwrap();
+        println!("latest.json says {} -> {} ({} bytes)", latest["version"], url, installer.len());
+        let key = minisign_verify::PublicKey::decode(&pubkey).unwrap();
+        let sig = minisign_verify::Signature::decode(&signature).unwrap();
+        key.verify(&installer, &sig, true).expect("signature must verify");
+        println!("signature OK");
+    }
+}

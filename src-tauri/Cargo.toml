@@ -35,9 +35,15 @@ windows-sys = { version = "0.61", features = [
 ] }
 
 [profile.release]
-# Small, fast exe: one codegen unit, link-time optimisation, no debug symbols.
-codegen-units = 1
-lto = true
+# Fast exe that still builds quickly: thin LTO runs on all CPU cores
+# (full LTO + 1 codegen unit made every release build take ~4.5 minutes).
+codegen-units = 16
+lto = "thin"
 opt-level = 3
 panic = "abort"
 strip = true
+
+[dev-dependencies]
+# Same versions the updater plugin already uses (no extra download): release signature test.
+minisign-verify = "0.3"
+base64 = "0.22"

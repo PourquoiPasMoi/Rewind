@@ -3435,9 +3435,11 @@ dependencies = [
 
 [[package]]
 name = "rewind"
-version = "1.0.1"
+version = "1.0.2"
 dependencies = [
+ "base64 0.22.1",
  "chrono",
+ "minisign-verify",
  "regex",
  "reqwest 0.12.28",
  "rfd",
