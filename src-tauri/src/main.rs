@@ -5,6 +5,7 @@ mod commands;
 mod detect;
 mod library;
 mod recorder;
+mod schedule;
 mod store;
 mod tools;
 mod tray;
@@ -73,6 +74,7 @@ fn main() {
             commands::remove_channel,
             commands::set_channel_enabled,
             commands::set_channel_color,
+            commands::set_channel_timers,
             commands::record_now,
             commands::stop_recording,
             commands::check_now,

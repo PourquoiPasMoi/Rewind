@@ -37,6 +37,23 @@ pub struct Channel {
     pub color: u8,
     #[serde(default)]
     pub added_at: i64,
+    /// Timer programs. Empty = watched all the time.
+    #[serde(default)]
+    pub timers: Vec<Timer>,
+}
+
+/// One VCR timer program: on these days, look for the stream from `start` to `end`.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Timer {
+    /// Bit 0 = Monday ... bit 6 = Sunday.
+    pub days: u8,
+    /// Minutes after midnight, local time.
+    pub start: u16,
+    /// Minutes after midnight. Smaller than `start` = ends after midnight; equal = 24 hours.
+    pub end: u16,
+    #[serde(default = "yes")]
+    pub enabled: bool,
 }
 
 fn yes() -> bool {

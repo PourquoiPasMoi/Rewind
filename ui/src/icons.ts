@@ -16,6 +16,7 @@ export const icon = {
   eye: wrap(`<path d="M1.5 8S4 3.5 8 3.5 14.5 8 14.5 8 12 12.5 8 12.5 1.5 8 1.5 8z"/><circle cx="8" cy="8" r="2"/>`),
   eyeOff: wrap(`<path d="M2 2l12 12M6.5 4c.5-.2 1-.3 1.5-.3 4 0 6.5 4.3 6.5 4.3s-.6 1.1-1.8 2.3M4 5.3C2.4 6.5 1.5 8 1.5 8S4 12.5 8 12.5c1 0 1.9-.3 2.7-.7"/>`),
   dots: `<svg viewBox="0 0 16 16" aria-hidden="true"><circle cx="3.5" cy="8" r="1.4" fill="currentColor"/><circle cx="8" cy="8" r="1.4" fill="currentColor"/><circle cx="12.5" cy="8" r="1.4" fill="currentColor"/></svg>`,
+  timer: wrap(`<circle cx="8" cy="9" r="5.5"/><path d="M8 6v3l2 1.5M6.5 1.8h3"/>`),
   search: wrap(`<circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5L14 14"/>`),
   twitch: `<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M3 1.5L1.8 4.3v9h3V15h1.8l1.7-1.7h2.6l3.3-3.3V1.5zm9.6 7.9l-1.9 1.9H7.8l-1.7 1.7v-1.7H3.6V2.7h9z"/><path fill="currentColor" d="M10.4 4.6h1.2v3.5h-1.2zM7.3 4.6h1.2v3.5H7.3z"/></svg>`,
   youtube: `<svg viewBox="0 0 16 16" aria-hidden="true"><path fill="currentColor" d="M15.3 4.3a2 2 0 00-1.4-1.4C12.7 2.6 8 2.6 8 2.6s-4.7 0-5.9.3A2 2 0 00.7 4.3C.4 5.5.4 8 .4 8s0 2.5.3 3.7a2 2 0 001.4 1.4c1.2.3 5.9.3 5.9.3s4.7 0 5.9-.3a2 2 0 001.4-1.4c.3-1.2.3-3.7.3-3.7s0-2.5-.3-3.7zM6.5 10.3V5.7L10.4 8z"/></svg>`,

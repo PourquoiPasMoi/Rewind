@@ -5,6 +5,7 @@ import "./styles/channels.css";
 import "./styles/tapes.css";
 import "./styles/player.css";
 import "./styles/setup.css";
+import "./styles/timer.css";
 
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";

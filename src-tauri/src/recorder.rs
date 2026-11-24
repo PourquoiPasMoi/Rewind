@@ -3,6 +3,7 @@
 
 use crate::detect::{self, LiveInfo};
 use crate::library::{self, TapeMeta};
+use crate::schedule;
 use crate::store::{Channel, Platform, Store};
 use crate::tools::Tools;
 use crate::winutil::{self, Job, NO_WINDOW};
@@ -156,6 +157,12 @@ pub struct ChannelView {
     pub url: String,
     pub status: Option<Status>,
     pub session: Option<SessionView>,
+    /// Has timer programs (only watched inside them).
+    pub scheduled: bool,
+    /// Inside a timer window right now (counting the early start).
+    pub timer_active: bool,
+    /// Next programmed start, unix ms.
+    pub next_timer: Option<i64>,
 }
 
 #[derive(Clone, Debug, Serialize)]
@@ -180,6 +187,9 @@ pub fn snapshot(sh: &Shared) -> Snapshot {
                 url: c.page_url(),
                 status: status.get(&c.id).cloned(),
                 session: sessions.get(&c.id).map(Session::view),
+                scheduled: schedule::scheduled(&c.timers),
+                timer_active: schedule::active(&c.timers),
+                next_timer: schedule::next_start(&c.timers),
                 channel: c.clone(),
             })
             .collect(),
@@ -269,14 +279,19 @@ fn due_channels(sh: &Shared) -> Vec<Channel> {
             if st.is_some_and(|s| s.checking) {
                 return false;
             }
+            let mut holding = false;
             if let Some(session) = sessions.get(&c.id) {
                 if session.state != SessionState::Holding {
                     return false;
                 }
+                holding = true;
             }
             let forced = st.is_some_and(|s| s.force);
             let due = st.map(|s| now >= s.next_check).unwrap_or(true);
-            forced || (c.enabled && !store.settings.paused && due)
+            // A channel with timer programs is only looked at inside them
+            // (a dropped stream being held still is, so it can continue on the same tape).
+            let in_window = !schedule::scheduled(&c.timers) || schedule::active(&c.timers);
+            forced || (c.enabled && !store.settings.paused && due && (in_window || holding))
         })
         .take(4)
         .cloned()
@@ -287,10 +302,14 @@ async fn check_channel(app: &AppHandle, sh: &Arc<Shared>, channel: Channel) {
     set_status(sh, &channel.id, |s| s.checking = true);
     let result = detect::check(&sh.http, channel.platform, &channel.handle).await;
     let now = now_ms();
-    let (interval, paused) = {
+    let (mut interval, paused) = {
         let s = &sh.store.lock().unwrap().settings;
         (s.poll_seconds as i64 * 1000, s.paused)
     };
+    if schedule::scheduled(&channel.timers) && schedule::active(&channel.timers) {
+        // Inside a timer window: look often so the start of the stream isn't missed.
+        interval = interval.min(30_000);
+    }
     let holding = sh
         .sessions
         .lock()

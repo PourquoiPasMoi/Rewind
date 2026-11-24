@@ -30,7 +30,20 @@ export interface SessionView {
   title: string;
 }
 
+export interface Timer {
+  /** Bit 0 = Monday ... bit 6 = Sunday. */
+  days: number;
+  /** Minutes after midnight. */
+  start: number;
+  end: number;
+  enabled: boolean;
+}
+
 export interface ChannelView {
+  timers: Timer[];
+  scheduled: boolean;
+  timerActive: boolean;
+  nextTimer?: number | null;
   id: string;
   platform: Platform;
   handle: string;
@@ -105,6 +118,7 @@ export const api = {
   removeChannel: (id: string) => invoke<void>("remove_channel", { id }),
   setEnabled: (id: string, enabled: boolean) => invoke<void>("set_channel_enabled", { id, enabled }),
   setColor: (id: string, color: number) => invoke<void>("set_channel_color", { id, color }),
+  setTimers: (id: string, timers: Timer[]) => invoke<void>("set_channel_timers", { id, timers }),
   recordNow: (id: string) => invoke<void>("record_now", { id }),
   stop: (id: string) => invoke<void>("stop_recording", { id }),
   checkNow: (id?: string) => invoke<void>("check_now", { id: id ?? null }),

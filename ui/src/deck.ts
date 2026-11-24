@@ -2,6 +2,7 @@
 
 import type { Snapshot } from "./api";
 import { SegmentClock } from "./segments";
+import { whenLabel } from "./timer";
 import { bytes, clock, reducedMotion, until } from "./util";
 
 const $ = (id: string) => document.getElementById(id)!;
@@ -48,7 +49,10 @@ export class Deck {
     $("count-live").textContent = String(live.length);
     $("count-rec").textContent = String(recording.length);
     $("flag-rec").classList.toggle("on", recording.length > 0);
-    $("flag-watch").classList.toggle("on", !snap.paused && snap.channels.some((c) => c.enabled));
+    // Like a real VCR: TIMER lights when a timer is programmed, blinks while one is running.
+    const timed = snap.channels.filter((c) => c.enabled && c.scheduled);
+    $("flag-watch").classList.toggle("on", !snap.paused && timed.length > 0);
+    $("flag-watch").classList.toggle("running", !snap.paused && timed.some((c) => c.timerActive));
     $("flag-pause").classList.toggle("on", snap.paused);
     document.getElementById("slot")!.classList.toggle("loaded", recording.length > 0);
     this.messages = this.buildMessages();
@@ -85,8 +89,14 @@ export class Deck {
       else {
         const watching = snap.channels.filter((c) => c.enabled).length;
         out.push(`Watching ${watching} channel${watching === 1 ? "" : "s"}`);
+        const running = snap.channels.filter((c) => c.enabled && c.scheduled && c.timerActive);
+        for (const c of running) out.push(`Timer on: ${c.name}`);
+        const nextTimed = snap.channels
+          .filter((c) => c.enabled && c.scheduled && !c.timerActive && c.nextTimer)
+          .sort((a, b) => a.nextTimer! - b.nextTimer!)[0];
+        if (nextTimed) out.push(`Timer: ${nextTimed.name} ${whenLabel(nextTimed.nextTimer!)}`);
         const next = snap.channels
-          .filter((c) => c.enabled && c.status?.nextCheck)
+          .filter((c) => c.enabled && c.status?.nextCheck && (!c.scheduled || c.timerActive))
           .map((c) => c.status!.nextCheck)
           .sort((a, b) => a - b)[0];
         if (next) out.push(`Next look in ${until(next)}`);

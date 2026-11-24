@@ -4,6 +4,7 @@ import { api, errorText, type ChannelView, type Snapshot } from "./api";
 import { icon } from "./icons";
 import { osd } from "./osd";
 import * as sound from "./sound";
+import { LEAD_MINUTES, openTimerEditor, timerSummary, whenLabel } from "./timer";
 import { ago, bytes, clock, el, reducedMotion, svg, until } from "./util";
 
 interface Card {
@@ -16,6 +17,8 @@ interface Card {
   stamp: HTMLElement;
   primary: HTMLButtonElement;
   watch: HTMLButtonElement;
+  timer: HTMLButtonElement;
+  timerTag: HTMLElement;
   data: ChannelView;
   photoSrc: string;
 }
@@ -142,9 +145,10 @@ export class ChannelsView {
     const meta = el("div", { class: "card-meta" });
     const primary = el("button", { class: "tape-btn primary" });
     const watch = el("button", { class: "tape-btn icon" });
-    const open = el("button", { class: "tape-btn icon", title: "Open channel page", "aria-label": "Open channel page" });
-    open.innerHTML = icon.external;
-    const more = el("button", { class: "tape-btn icon", title: "Label colour and remove", "aria-label": "More" });
+    const timer = el("button", { class: "tape-btn icon timer-btn", title: "Timer: only look at set times", "aria-label": "Timer" });
+    timer.innerHTML = icon.timer;
+    const timerTag = el("span", { class: "label-timer" });
+    const more = el("button", { class: "tape-btn icon", title: "Channel page, label colour, remove", "aria-label": "More" });
     more.innerHTML = icon.dots;
 
     const root = el("article", { class: "cassette-card", "data-id": channel.id },
@@ -156,6 +160,7 @@ export class ChannelsView {
             el("span", { class: "label-side", text: "A" }),
             el("span", { class: "label-platform" }),
             el("span", { class: "label-brand", text: channel.platform === "twitch" ? "Twitch" : "YouTube" }),
+            timerTag,
           ),
           el("div", { class: "label-paper" }, name, sub),
           el("div", { class: "window" }, reel("left"), el("div", { class: "tape-run" }), reel("right")),
@@ -166,12 +171,16 @@ export class ChannelsView {
       ),
       el("div", { class: "card-foot" },
         el("div", { class: "card-text" }, status, meta),
-        el("div", { class: "card-actions" }, primary, watch, open, more),
+        el("div", { class: "card-actions" }, primary, watch, timer, more),
       ),
     );
     (root.querySelector(".label-platform") as HTMLElement).innerHTML = channel.platform === "twitch" ? icon.twitch : icon.youtube;
 
-    const card: Card = { root, name, sub, photo, status, meta, stamp, primary, watch, data: channel, photoSrc: "" };
+    const card: Card = { root, name, sub, photo, status, meta, stamp, primary, watch, timer, timerTag, data: channel, photoSrc: "" };
+    timer.addEventListener("click", () => {
+      sound.click();
+      openTimerEditor(card.data);
+    });
 
     primary.addEventListener("click", async () => {
       sound.click();
@@ -197,7 +206,6 @@ export class ChannelsView {
         osd(errorText(e), "error");
       }
     });
-    open.addEventListener("click", () => api.openUrl(card.data.url).catch((e) => osd(errorText(e), "error")));
     more.addEventListener("click", (event) => {
       event.stopPropagation();
       this.menu(card, more);
@@ -211,11 +219,20 @@ export class ChannelsView {
     const c = card.data;
     const st = c.status;
     const s = c.session;
-    const state = s ? s.state : st?.live ? "live" : !c.enabled ? "off" : st?.upcomingAt ? "soon" : "idle";
+    // Outside its timer window a channel isn't looked at, so an old "live" result means nothing.
+    const waiting = !s && c.enabled && c.scheduled && !c.timerActive;
+    const state = s ? s.state : !c.enabled ? "off" : waiting ? "timer" : st?.live ? "live" : st?.upcomingAt ? "soon" : "idle";
     const root = card.root;
-    for (const cls of ["is-recording", "is-holding", "is-saving", "is-live", "is-off", "is-soon", "is-idle"]) root.classList.remove(cls);
+    for (const cls of ["is-recording", "is-holding", "is-saving", "is-live", "is-off", "is-soon", "is-idle", "is-timer"]) root.classList.remove(cls);
     root.classList.add(`is-${state}`);
+    root.classList.toggle("timer-on", c.scheduled && c.timerActive);
     root.style.setProperty("--label", `var(--c${c.color % COLORS})`);
+
+    const summary = timerSummary(c.timers);
+    card.timerTag.hidden = !c.scheduled;
+    card.timerTag.innerHTML = c.scheduled ? `${icon.timer}<span>${c.timerActive ? "On now" : c.nextTimer ? whenLabel(c.nextTimer) : ""}</span>` : "";
+    card.timer.classList.toggle("set", c.scheduled);
+    card.timer.title = c.scheduled ? `Timer: ${summary}. Click to change.` : "Timer: only look at set times";
 
     card.name.textContent = c.name;
     const subText = s?.title || (st?.live ? st.title : "") || (st?.upcomingAt ? "Scheduled stream" : "") || (c.platform === "twitch" ? `twitch.tv/${c.handle}` : c.handle);
@@ -265,6 +282,11 @@ export class ChannelsView {
     } else if (s?.state === "saving") {
       status = "Saving tape";
       meta = `${clock(s.recordedSecs)} recorded, ${bytes(s.bytes)}`;
+    } else if (c.enabled && c.scheduled && !c.timerActive) {
+      status = "Timer set";
+      meta = c.nextTimer
+        ? `Starts looking ${whenLabel(c.nextTimer - LEAD_MINUTES * 60_000)} (${timerSummary(c.timers)})`
+        : timerSummary(c.timers) || "All timer programs are off";
     } else if (st?.live) {
       status = "Live now";
       if (st.suppressed) meta = "You stopped this stream. The next one records again.";
@@ -285,6 +307,9 @@ export class ChannelsView {
     } else if (st.upcomingAt) {
       status = "Scheduled";
       meta = new Date(st.upcomingAt * 1000).toLocaleString(undefined, { weekday: "short", hour: "2-digit", minute: "2-digit" });
+    } else if (c.scheduled) {
+      status = "Timer on, off air";
+      meta = `Looking every 30 s, checked ${ago(st.checkedAt, now)}`;
     } else {
       status = "Off air";
       meta = `Checked ${ago(st.checkedAt, now)}`;
@@ -330,7 +355,14 @@ export class ChannelsView {
       }
       pop.remove();
     });
+    const page = el("button", { class: "pop-link" }, el("span", { text: card.data.platform === "twitch" ? "Open on Twitch" : "Open on YouTube" }));
+    page.insertAdjacentHTML("afterbegin", icon.external);
+    page.addEventListener("click", () => {
+      api.openUrl(card.data.url).catch((e) => osd(errorText(e), "error"));
+      pop.remove();
+    });
     const pop = el("div", { class: "pop", role: "dialog", "aria-label": `${card.data.name} options` },
+      page,
       el("p", { class: "pop-title", text: "Label colour" }),
       swatches,
       remove,

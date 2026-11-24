@@ -44,6 +44,7 @@ pub async fn add_channel(app: AppHandle, sh: Sh<'_>, input: String) -> R<Channel
             enabled: true,
             color: (store.channels.len() % 6) as u8,
             added_at: recorder::now_ms(),
+            timers: Vec::new(),
         };
         store.channels.push(channel.clone());
         channel
@@ -89,6 +90,31 @@ pub fn set_channel_color(app: AppHandle, sh: Sh, id: String, color: u8) -> R<()>
         channel.color = color % 6;
     }
     sh.save_store()?;
+    recorder::emit_snapshot(&app, &sh);
+    Ok(())
+}
+
+#[tauri::command]
+pub fn set_channel_timers(app: AppHandle, sh: Sh, id: String, timers: Vec<crate::store::Timer>) -> R<()> {
+    if timers.len() > 8 {
+        return Err("A channel can have up to 8 timer programs".into());
+    }
+    for t in &timers {
+        if t.days & 0x7f == 0 {
+            return Err("Pick at least one day for each timer".into());
+        }
+        if t.start >= 1440 || t.end >= 1440 {
+            return Err("That time is not valid".into());
+        }
+    }
+    {
+        let mut store = sh.store.lock().unwrap();
+        let channel = store.channels.iter_mut().find(|c| c.id == id).ok_or("Unknown channel")?;
+        channel.timers = timers;
+    }
+    sh.save_store()?;
+    // Look right away if the new window is already open.
+    recorder::check_now(&sh, Some(&id));
     recorder::emit_snapshot(&app, &sh);
     Ok(())
 }

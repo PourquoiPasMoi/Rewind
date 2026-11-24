@@ -1,0 +1,346 @@
+/* ---------------------------------------------------------------- timer on the cassette */
+
+.label-timer {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 1px 7px 1px 5px;
+  border-radius: 9px;
+  background: #15120f;
+  color: var(--paper);
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.label-timer svg {
+  width: 12px;
+  height: 12px;
+}
+
+.timer-on .label-timer {
+  background: var(--rec);
+  color: #fff;
+}
+
+.timer-on .label-timer svg {
+  animation: spin 4s steps(12) infinite;
+}
+
+/* Status gets its own full-width line, buttons below (the timer text is long). */
+.card-foot {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 10px;
+}
+
+.card-meta {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  min-height: 2.9em;
+}
+
+.pop-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.pop-link svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pop-link:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+/* Leave room for the photo on the right of the band. */
+.label-band {
+  padding-right: 98px;
+}
+
+.tape-btn.timer-btn.set {
+  color: var(--vfd);
+  border-color: rgba(94, 242, 214, 0.35);
+}
+
+.is-timer .cassette {
+  filter: saturate(0.85);
+}
+
+.is-timer .card-status {
+  color: var(--vfd);
+}
+
+.timer-on .card-status {
+  color: var(--vfd);
+}
+
+.flag.on.running {
+  animation: blink 1.6s steps(1) infinite;
+}
+
+/* ---------------------------------------------------------------- timer program screen */
+
+.timer-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(10, 9, 8, 0.72);
+  backdrop-filter: blur(4px);
+  animation: fadeIn 0.18s ease-out both;
+}
+
+.timer-modal.closing {
+  animation: fadeOut 0.18s ease-in both;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+}
+
+@keyframes fadeOut {
+  to { opacity: 0; }
+}
+
+.timer-box {
+  width: min(760px, 100%);
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  padding: 24px 28px 22px;
+  border-radius: 14px;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.07) 0 1px, transparent 1px 3px),
+    radial-gradient(130% 120% at 50% 0%, #2a4ce0, var(--osd-blue) 55%, #1733b3);
+  color: #fff;
+  text-shadow: 2px 2px 0 rgba(0, 0, 20, 0.45);
+  box-shadow: 0 30px 70px -20px rgba(0, 0, 0, 0.9);
+  animation: osdMenuIn 0.28s steps(4) both;
+}
+
+.timer-box .osd-head h2 {
+  font-size: 26px;
+}
+
+.timer-channel {
+  font-family: var(--hand);
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.timer-help {
+  margin: 0 0 16px;
+  font-size: 14px;
+  opacity: 0.85;
+  max-width: 62ch;
+}
+
+.timer-list {
+  display: grid;
+  gap: 10px;
+}
+
+.timer-program {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) 32px;
+  gap: 12px;
+  align-items: start;
+  padding: 12px 12px 12px 14px;
+  border-radius: 8px;
+  background: rgba(0, 0, 40, 0.22);
+  border: 2px solid rgba(255, 255, 255, 0.16);
+}
+
+.timer-program.off {
+  opacity: 0.6;
+}
+
+.prog-no {
+  font-size: 22px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  padding-top: 4px;
+}
+
+.prog-body {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+}
+
+.prog-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+}
+
+.timer-days {
+  display: flex;
+  gap: 4px;
+}
+
+.day {
+  width: 32px;
+  height: 32px;
+  border-radius: 4px;
+  border: 2px solid rgba(255, 255, 255, 0.55);
+  background: transparent;
+  font-weight: 700;
+  font-size: 14px;
+  text-shadow: inherit;
+}
+
+.day[aria-pressed="true"] {
+  background: #fff;
+  border-color: #fff;
+  color: var(--osd-blue);
+  text-shadow: none;
+}
+
+.timer-presets {
+  display: flex;
+  gap: 4px;
+}
+
+.preset {
+  border: 0;
+  background: transparent;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.8;
+  text-shadow: inherit;
+}
+
+.preset:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.preset[aria-pressed="true"] {
+  opacity: 1;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+}
+
+.time-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+}
+
+.time {
+  height: 36px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 2px solid #fff;
+  background: #0d1f8a;
+  color: #fff;
+  font-size: 19px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color-scheme: dark;
+  user-select: text;
+}
+
+.time:focus-visible {
+  outline: 3px solid #ffe14d;
+  outline-offset: 1px;
+}
+
+.osd-btn.small {
+  padding: 2px 10px;
+}
+
+.osd-btn[aria-pressed="false"] {
+  opacity: 0.75;
+}
+
+.prog-hint {
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.prog-hint.bad {
+  opacity: 1;
+  color: #ffd76b;
+  font-weight: 700;
+}
+
+.timer-remove {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  opacity: 0.75;
+}
+
+.timer-remove:hover {
+  opacity: 1;
+  background: rgba(255, 255, 255, 0.14);
+}
+
+.timer-remove svg {
+  width: 15px;
+  height: 15px;
+}
+
+.timer-add {
+  margin: 12px 0 18px;
+}
+
+.timer-add .osd-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.timer-add .osd-btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.timer-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  padding-top: 16px;
+  border-top: 2px solid rgba(255, 255, 255, 0.18);
+}
+
+.timer-gap {
+  flex: 1;
+}
+
+.osd-btn.ghost {
+  border-color: transparent;
+  opacity: 0.8;
+  font-weight: 600;
+}
+
+.osd-btn.ghost:hover {
+  opacity: 1;
+}
