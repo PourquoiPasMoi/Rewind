@@ -6,6 +6,7 @@ use serde::Serialize;
 use std::os::windows::process::CommandExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::Duration;
 use tokio::io::AsyncWriteExt;
 
 pub const YT_DLP_URL: &str = "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe";
@@ -81,7 +82,15 @@ fn winget_ffmpeg() -> Option<PathBuf> {
     None
 }
 
+/// No byte for this long = the connection is dead; reconnect and resume.
+const STALL: Duration = Duration::from_secs(60);
+const ATTEMPTS: u32 = 8;
+
 /// Downloads the official yt-dlp.exe into Rewind's own folder.
+///
+/// Made for slow and unstable lines: there is no total time limit (the shared client's
+/// 25 s limit is for tiny live checks only), a stalled or dropped connection reconnects,
+/// and every retry continues from the bytes already saved (HTTP Range) instead of restarting.
 pub async fn download_yt_dlp(
     http: &reqwest::Client,
     bin_dir: &Path,
@@ -90,33 +99,111 @@ pub async fn download_yt_dlp(
     tokio::fs::create_dir_all(bin_dir).await.map_err(|e| e.to_string())?;
     let target = bin_dir.join("yt-dlp.exe");
     let tmp = bin_dir.join("yt-dlp.exe.download");
-    let mut resp = http
-        .get(YT_DLP_URL)
-        .send()
-        .await
-        .and_then(|r| r.error_for_status())
-        .map_err(|e| format!("Download failed: {e}"))?;
-    let total = resp.content_length();
-    let mut file = tokio::fs::File::create(&tmp).await.map_err(|e| e.to_string())?;
-    let mut received = 0u64;
-    let mut last_report = 0u64;
-    while let Some(chunk) = resp.chunk().await.map_err(|e| format!("Download failed: {e}"))? {
-        file.write_all(&chunk).await.map_err(|e| e.to_string())?;
-        received += chunk.len() as u64;
-        if received - last_report > 256 * 1024 {
-            last_report = received;
-            progress(received, total);
+    // A part left by an earlier failed try is continued, not thrown away.
+    let mut received = tokio::fs::metadata(&tmp).await.map(|m| m.len()).unwrap_or(0);
+    let mut total: Option<u64> = None;
+    let mut last_error = String::new();
+
+    for attempt in 0..ATTEMPTS {
+        if attempt > 0 {
+            tokio::time::sleep(Duration::from_secs(2u64.pow(attempt.min(4)))).await;
+        }
+        match download_pass(http, &tmp, &mut received, &mut total, &progress).await {
+            Ok(()) => {
+                if received < 1024 * 1024 || total.is_some_and(|t| received < t) {
+                    last_error = "the file arrived incomplete".into();
+                    continue;
+                }
+                progress(received, total);
+                let _ = tokio::fs::remove_file(&target).await;
+                tokio::fs::rename(&tmp, &target).await.map_err(|e| e.to_string())?;
+                // A resumed file that got mixed up would not start: catch it now, not mid-stream.
+                let check = target.clone();
+                let works = tokio::task::spawn_blocking(move || first_line(&check, "--version").is_some())
+                    .await
+                    .unwrap_or(false);
+                if !works {
+                    let _ = tokio::fs::remove_file(&target).await;
+                    return Err(
+                        "The downloaded yt-dlp would not start. It may be damaged, or your antivirus blocked it. Press Download to try again."
+                            .into(),
+                    );
+                }
+                return Ok(target);
+            }
+            Err(e) => last_error = e,
         }
     }
-    file.flush().await.map_err(|e| e.to_string())?;
-    drop(file);
-    if received < 1024 * 1024 {
-        let _ = tokio::fs::remove_file(&tmp).await;
-        return Err("The download was incomplete. Try again.".into());
+    Err(format!(
+        "Download stopped at {} MB: {last_error}. Press Download again to continue from there.",
+        received / 1_048_576
+    ))
+}
+
+async fn download_pass(
+    http: &reqwest::Client,
+    tmp: &Path,
+    received: &mut u64,
+    total: &mut Option<u64>,
+    progress: &impl Fn(u64, Option<u64>),
+) -> Result<(), String> {
+    let mut req = http.get(YT_DLP_URL).timeout(Duration::from_secs(6 * 3600));
+    if *received > 0 {
+        req = req.header(reqwest::header::RANGE, format!("bytes={}-", *received));
     }
-    progress(received, total);
-    tokio::fs::rename(&tmp, &target).await.map_err(|e| e.to_string())?;
-    Ok(target)
+    let mut resp = req.send().await.map_err(describe)?;
+    let status = resp.status();
+    if status == reqwest::StatusCode::RANGE_NOT_SATISFIABLE {
+        // Saved part is broken or from an older release: start over.
+        *received = 0;
+        let _ = tokio::fs::remove_file(tmp).await;
+        return Err("starting over".into());
+    }
+    let resp_ok = resp.error_for_status_ref().map(|_| ()).map_err(describe);
+    resp_ok?;
+    let resumed = status == reqwest::StatusCode::PARTIAL_CONTENT;
+    if !resumed {
+        // The server sent the whole file: write it from the start.
+        *received = 0;
+    }
+    if let Some(len) = resp.content_length() {
+        *total = Some(len + *received);
+    }
+    let mut file = tokio::fs::OpenOptions::new()
+        .create(true)
+        .write(true)
+        .append(resumed)
+        .truncate(!resumed)
+        .open(tmp)
+        .await
+        .map_err(|e| e.to_string())?;
+    let mut last_report = 0u64;
+    loop {
+        let chunk = match tokio::time::timeout(STALL, resp.chunk()).await {
+            Err(_) => return Err("the connection stopped sending data".into()),
+            Ok(result) => result.map_err(describe)?,
+        };
+        let Some(chunk) = chunk else { break };
+        file.write_all(&chunk).await.map_err(|e| e.to_string())?;
+        *received += chunk.len() as u64;
+        if *received - last_report > 256 * 1024 {
+            last_report = *received;
+            progress(*received, *total);
+        }
+    }
+    file.flush().await.map_err(|e| e.to_string())
+}
+
+fn describe(e: reqwest::Error) -> String {
+    if e.is_connect() {
+        "no connection to GitHub".into()
+    } else if e.is_timeout() {
+        "the connection timed out".into()
+    } else if e.is_status() {
+        format!("GitHub answered {}", e.status().map(|s| s.as_u16()).unwrap_or(0))
+    } else {
+        "the connection dropped".into()
+    }
 }
 
 /// `yt-dlp -U` on Rewind's own copy. Returns yt-dlp's last line ("yt-dlp is up to date ...").
@@ -128,6 +215,24 @@ pub fn update_yt_dlp(exe: &Path) -> Result<String, String> {
         Ok(last)
     } else {
         Err(last)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    /// Network test (about 18 MB): `cargo test resumes_download -- --ignored --nocapture`.
+    /// Expects `$TEMP/rewind-dl-test/yt-dlp.exe.download` to hold the first bytes of the file.
+    #[tokio::test]
+    #[ignore]
+    async fn resumes_download() {
+        let dir = std::env::temp_dir().join("rewind-dl-test");
+        let before = std::fs::metadata(dir.join("yt-dlp.exe.download")).map(|m| m.len()).unwrap_or(0);
+        println!("partial file before: {before} bytes");
+        let http = reqwest::Client::builder().timeout(Duration::from_secs(25)).build().unwrap();
+        let exe = download_yt_dlp(&http, &dir, |got, total| println!("{got} / {total:?}")).await.unwrap();
+        println!("version: {:?}", first_line(&exe, "--version"));
     }
 }
 

@@ -48,6 +48,8 @@ export class SetupView {
   private menu!: HTMLElement;
   private rows: HTMLElement[] = [];
   private active = 0;
+  /** Last helper download error: stays on screen (a toast is too easy to miss). */
+  private toolError: string | null = null;
   onSettings: (s: Settings) => void = () => {};
 
   constructor(host: HTMLElement) {
@@ -209,23 +211,29 @@ export class SetupView {
         ytControl.append(update);
       }
     } else {
-      const get = el("button", { class: "osd-btn strong", text: "Download yt-dlp (about 18 MB)" });
+      const get = el("button", { class: "osd-btn strong", text: "Download yt-dlp (about 24 MB)" });
       get.addEventListener("click", async () => {
         sound.click();
         get.disabled = true;
         get.textContent = "Downloading";
+        this.toolError = null;
         try {
           this.tools = await api.installYtDlp();
           osd("yt-dlp is ready", "saved");
         } catch (e) {
-          osd(errorText(e), "error");
+          this.toolError = errorText(e);
+          osd(this.toolError, "error");
         }
         this.render();
       });
       ytControl.append(el("span", { class: "osd-bad", text: "Missing" }), get);
     }
-    group.append(this.row("ytdlp", "yt-dlp, grabs the stream", ytControl,
-      t.ytDlp ? "Twitch and YouTube change often. Update yt-dlp if recordings start failing." : "Downloaded from the official yt-dlp page on GitHub"));
+    const ytRow = this.row("ytdlp", "yt-dlp, grabs the stream", ytControl,
+      t.ytDlp ? "Twitch and YouTube change often. Update yt-dlp if recordings start failing." : "Downloaded from the official yt-dlp page on GitHub. A slow connection is fine, it resumes if it drops.");
+    if (this.toolError && !t.ytDlp) {
+      ytRow.append(el("span", { class: "menu-note menu-error", role: "alert", text: this.toolError }));
+    }
+    group.append(ytRow);
 
     const ffControl = el("div", { class: "osd-folder" });
     if (t.ffmpeg) {

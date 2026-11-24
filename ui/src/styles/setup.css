@@ -87,6 +87,16 @@
   margin-top: 4px;
 }
 
+.menu-note.menu-error {
+  opacity: 1;
+  font-weight: 700;
+  color: #ffd76b;
+}
+
+.menu-row.active .menu-note.menu-error {
+  color: #a33a00;
+}
+
 /* The selection bar. */
 .menu-row.active {
   background: #fff;

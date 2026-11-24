@@ -7,12 +7,12 @@ Built with Rust and Tauri 2. Windows 10/11.
 
 ## Download
 
-Get `Rewind_1.0.0_x64-setup.exe` (installer) or `Rewind.exe` (portable, no install) from the
+Get `Rewind_<version>_x64-setup.exe` (installer) or `Rewind.exe` (portable, no install) from the
 [latest release](https://github.com/PourquoiPasMoi/Rewind/releases/latest).
 
 On first start, open **Setup** and get the two helper programs:
 
-- **yt-dlp** grabs the stream. One click downloads it (about 18 MB).
+- **yt-dlp** grabs the stream. One click downloads it (about 24 MB). Slow or unstable internet is fine: it resumes where it stopped.
 - **ffmpeg** writes the video file. One click installs it with Windows' own `winget`.
 
 ## How it works
