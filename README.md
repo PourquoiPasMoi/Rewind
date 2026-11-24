@@ -27,8 +27,14 @@ On first start, open **Setup** and get the two helper programs:
 - Closing the window hides Rewind to the tray, where it keeps watching. Quit from the tray
   saves any open recording first. Tapes left unfinished by a crash or power cut are saved
   the next time Rewind starts.
+- **Timer:** give a channel timer programs (days, from, to) and Rewind looks for it only then,
+  from 10 minutes early. A stream that starts in time is recorded to the end.
+- **Download tab:** paste a YouTube video link, pick any quality it has (4K 60 fps down to
+  144p, or sound only as MP3) with the size shown, and download. Videos are saved to
+  `Videos\Rewind\Downloads\` and appear on the tape shelf.
+- **Updates:** Rewind checks GitHub for new versions and installs them (signed) from Setup.
 
-Only record streams you're allowed to keep. Rewind records public live streams; it does not
+Only record or download what you're allowed to keep. Rewind records public live streams; it does not
 record DRM-protected services.
 
 ## Build from source

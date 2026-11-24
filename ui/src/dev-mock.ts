@@ -45,6 +45,25 @@ const handlers: Record<string, (a: Args) => unknown> = {
   disk_info: () => ({ free: 268 * 1024 ** 3, total: 1000 * 1024 ** 3 }),
   tools_status: () => ({ ytDlp: "x", ytDlpVersion: "2026.11.23", ytDlpManaged: true, ffmpeg: "x", ffmpegVersion: "8.1.1" }),
   launch_info: () => ({ version: "1.0.3" }),
+  probe_video: async (a) => {
+    await new Promise((r) => setTimeout(r, 700));
+    const MB = 1_048_576;
+    const q = (id: string, height: number, fps: number, mb: number, codec: string, hdr = false) => ({ id, height, fps, size: mb * MB, codec, hdr });
+    return {
+      url: a.url, id: "LXb3EKWsInQ", title: "COSTA RICA IN 4K 60fps HDR (ULTRA HD)", channel: "Jacob + Katie Schwarz", duration: 314,
+      thumbnail: null, site: "Youtube",
+      qualities: [
+        q("2160p60", 2160, 60, 904, "VP9"), q("1440p60", 1440, 60, 355, "VP9"), q("1080p60", 1080, 60, 163, "H.264"),
+        q("720p60", 720, 60, 94, "H.264"), q("720p", 720, 30, 59, "H.264"), q("480p60", 480, 60, 73, "VP9", true),
+        q("480p", 480, 30, 25, "H.264"), q("360p", 360, 30, 16, "H.264"), q("240p", 240, 30, 10, "H.264"),
+        q("144p", 144, 30, 7, "H.264"), { id: "audio", height: 0, fps: 0, size: 4 * MB, codec: null, hdr: false },
+      ],
+    };
+  },
+  list_downloads: () => [
+    { id: 2, url: "x", title: "Lofi Girl - 1 A.M Study Session", channel: "Lofi Girl", thumbnail: null, quality: "1080p 60 fps", state: "downloading", progress: 0.43, speed: 2.4 * 1_048_576, eta: 95, size: 180 * 1_048_576, startedAt: now },
+    { id: 1, url: "y", title: "Building a VCR in Rust", channel: "Some Channel", thumbnail: null, quality: "720p", state: "done", progress: 1, size: 59 * 1_048_576, file: "C:\\x.mp4", startedAt: now },
+  ],
   set_channel_timers: (a) => {
     const c = channels.find((x) => x.id === a.id);
     if (c) {

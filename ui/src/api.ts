@@ -112,7 +112,49 @@ export interface Tools {
   node?: string | null;
 }
 
+export interface Quality {
+  id: string;
+  height: number;
+  fps: number;
+  size?: number | null;
+  codec?: string | null;
+  hdr: boolean;
+}
+
+export interface VideoInfo {
+  url: string;
+  id: string;
+  title: string;
+  channel: string;
+  duration?: number | null;
+  thumbnail?: string | null;
+  site: string;
+  qualities: Quality[];
+}
+
+export interface DownloadJob {
+  id: number;
+  url: string;
+  title: string;
+  channel: string;
+  thumbnail?: string | null;
+  quality: string;
+  state: "downloading" | "joining" | "done" | "failed" | "cancelled";
+  progress: number;
+  speed?: number | null;
+  eta?: number | null;
+  size?: number | null;
+  file?: string | null;
+  error?: string | null;
+  startedAt: number;
+}
+
 export const api = {
+  probeVideo: (url: string) => invoke<VideoInfo>("probe_video", { url }),
+  startDownload: (url: string, quality: string) => invoke<number>("start_download", { url, quality }),
+  downloads: () => invoke<DownloadJob[]>("list_downloads"),
+  cancelDownload: (id: number) => invoke<void>("cancel_download", { id }),
+  clearDownloads: () => invoke<void>("clear_downloads"),
   snapshot: () => invoke<Snapshot>("get_snapshot"),
   addChannel: (input: string) => invoke<ChannelView>("add_channel", { input }),
   removeChannel: (id: string) => invoke<void>("remove_channel", { id }),

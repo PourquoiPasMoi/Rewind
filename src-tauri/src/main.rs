@@ -3,6 +3,7 @@
 
 mod commands;
 mod detect;
+mod downloader;
 mod library;
 mod recorder;
 mod schedule;
@@ -23,6 +24,7 @@ fn main() {
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_main(app)))
         .plugin(tauri_plugin_updater::Builder::new().build())
         .manage(updater::Pending::default())
+        .manage(downloader::Downloads::default())
         .setup(|app| {
             let handle = app.handle().clone();
             let config_dir = app.path().app_config_dir()?;
@@ -93,6 +95,11 @@ fn main() {
             commands::install_ffmpeg,
             commands::disk_info,
             commands::launch_info,
+            commands::probe_video,
+            commands::start_download,
+            commands::list_downloads,
+            commands::cancel_download,
+            commands::clear_downloads,
             commands::check_update,
             commands::install_update,
             commands::quit_app,

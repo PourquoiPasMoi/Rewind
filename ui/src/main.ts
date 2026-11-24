@@ -6,10 +6,12 @@ import "./styles/tapes.css";
 import "./styles/player.css";
 import "./styles/setup.css";
 import "./styles/timer.css";
+import "./styles/downloads.css";
 
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { api, type Snapshot, type UpdateInfo } from "./api";
+import { api, type DownloadJob, type Snapshot, type UpdateInfo } from "./api";
+import { DownloadsView } from "./downloads";
 import { ChannelsView } from "./channels";
 import { Deck } from "./deck";
 import { osd, type OsdKind } from "./osd";
@@ -23,6 +25,8 @@ const deck = new Deck();
 const channels = new ChannelsView(document.getElementById("view-channels")!);
 const tapes = new TapesView(document.getElementById("view-tapes")!);
 const setup = new SetupView(document.getElementById("view-setup")!);
+const downloads = new DownloadsView(document.getElementById("view-download")!);
+downloads.onCount = (n) => deck.setDownloads(n);
 let current = "channels";
 let lastSnap: Snapshot | null = null;
 
@@ -59,9 +63,9 @@ function show(view: string) {
 }
 keys.forEach((key) => key.addEventListener("click", () => show(key.dataset.view!)));
 window.addEventListener("keydown", (e) => {
-  if (e.ctrlKey && ["1", "2", "3"].includes(e.key)) {
+  if (e.ctrlKey && ["1", "2", "3", "4"].includes(e.key)) {
     e.preventDefault();
-    show(["channels", "tapes", "setup"][Number(e.key) - 1]);
+    show(["channels", "tapes", "download", "setup"][Number(e.key) - 1]);
   }
 });
 
@@ -116,6 +120,7 @@ async function start() {
     void refreshDisk();
   });
   await listen<{ kind: OsdKind; text: string }>("toast", (e) => osd(e.payload.text, e.payload.kind));
+  await listen<DownloadJob[]>("downloads", (e) => downloads.setJobs(e.payload));
   await listen<UpdateInfo>("update-available", (e) => {
     const info = e.payload;
     setup.setUpdate(info);

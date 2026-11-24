@@ -17,6 +17,13 @@ export class Deck {
   private tapes = 0;
   private newVersion: string | null = null;
 
+  private downloading = 0;
+
+  setDownloads(count: number) {
+    this.downloading = count;
+    this.messages = this.buildMessages();
+  }
+
   setUpdate(version: string | null) {
     this.newVersion = version;
     this.messages = this.buildMessages();
@@ -103,6 +110,7 @@ export class Deck {
         if (this.tapes) out.push(`${this.tapes} tape${this.tapes === 1 ? "" : "s"} on the shelf`);
       }
     }
+    if (this.downloading) out.push(`Downloading ${this.downloading} video${this.downloading === 1 ? "" : "s"}`);
     if (this.newVersion) out.push(`Update ${this.newVersion} ready in Setup`);
     return out;
   }

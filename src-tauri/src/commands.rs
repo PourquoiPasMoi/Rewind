@@ -309,6 +309,31 @@ pub fn launch_info() -> serde_json::Value {
 }
 
 #[tauri::command]
+pub async fn probe_video(app: AppHandle, sh: Sh<'_>, url: String) -> R<crate::downloader::VideoInfo> {
+    crate::downloader::probe(&app, sh.inner(), url).await
+}
+
+#[tauri::command]
+pub fn start_download(app: AppHandle, sh: Sh, url: String, quality: String) -> R<u64> {
+    crate::downloader::start(&app, sh.inner(), url, quality)
+}
+
+#[tauri::command]
+pub fn list_downloads(app: AppHandle) -> Vec<crate::downloader::Job> {
+    crate::downloader::list(&app)
+}
+
+#[tauri::command]
+pub fn cancel_download(app: AppHandle, id: u64) {
+    crate::downloader::cancel(&app, id);
+}
+
+#[tauri::command]
+pub fn clear_downloads(app: AppHandle) {
+    crate::downloader::clear_finished(&app);
+}
+
+#[tauri::command]
 pub async fn check_update(app: AppHandle) -> R<Option<crate::updater::UpdateInfo>> {
     crate::updater::check(&app).await
 }
