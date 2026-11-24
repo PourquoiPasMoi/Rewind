@@ -1,0 +1,248 @@
+.player {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 30px;
+  align-items: center;
+  padding: 54px 36px 36px;
+  background: rgba(12, 11, 10, 0.88);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transition: opacity 0.25s var(--ease-out);
+}
+
+.player.open {
+  opacity: 1;
+}
+
+.player.closing {
+  opacity: 0;
+  transition-duration: 0.22s;
+}
+
+.tv {
+  min-width: 0;
+  transform: scale(0.96);
+  transition: transform 0.4s var(--spring);
+}
+
+.player.open .tv {
+  transform: none;
+}
+
+.tv-bezel {
+  padding: 16px 16px 38px;
+  border-radius: 24px;
+  background: linear-gradient(180deg, #34302b, #1d1a17);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 30px 60px -20px rgba(0, 0, 0, 0.9);
+}
+
+.tv-screen {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-height: calc(100vh - 170px);
+  margin: 0 auto;
+  border-radius: 14px;
+  background: #000;
+  overflow: hidden;
+}
+
+/* Glass: vignette + faint scan lines over the picture. */
+.tv-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    repeating-linear-gradient(0deg, rgba(0, 0, 0, 0.12) 0 1px, transparent 1px 3px),
+    radial-gradient(120% 100% at 50% 50%, transparent 60%, rgba(0, 0, 0, 0.45));
+  border-radius: inherit;
+}
+
+.tv-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #000;
+}
+
+.tv-snow {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  image-rendering: pixelated;
+  transition: opacity 0.25s;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.tv-snow.gone {
+  opacity: 0;
+}
+
+.tv-osd {
+  position: absolute;
+  z-index: 3;
+  font-weight: 700;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+  color: #fff;
+  text-shadow: 2px 2px 0 #000, 0 0 10px rgba(0, 0, 0, 0.6);
+  pointer-events: none;
+}
+
+.tv-osd.top {
+  top: 18px;
+  left: 24px;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.tv-osd.top.on {
+  opacity: 1;
+}
+
+.tv-osd.counter {
+  top: 18px;
+  right: 24px;
+  font-size: 20px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.85;
+}
+
+.tv-screen.no-signal {
+  background:
+    linear-gradient(90deg, #c0c0c0 0 14.28%, #c0c000 14.28% 28.56%, #00c0c0 28.56% 42.84%, #00c000 42.84% 57.12%, #c000c0 57.12% 71.4%, #c00000 71.4% 85.68%, #0000c0 85.68%);
+  display: grid;
+  place-items: center;
+}
+
+.tv-message {
+  display: grid;
+  gap: 6px;
+  max-width: 420px;
+  padding: 18px 22px;
+  border-radius: 10px;
+  background: rgba(0, 0, 0, 0.82);
+  text-align: center;
+  z-index: 3;
+}
+
+.tv-message b {
+  font-size: 18px;
+}
+
+.tv-message span {
+  color: var(--ink-2);
+}
+
+.tv-brand {
+  margin-top: -28px;
+  text-align: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: rgba(255, 255, 255, 0.2);
+  position: relative;
+}
+
+/* Details next to the TV. */
+.tape-info {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  padding-top: 8px;
+  transform: translateX(16px);
+  opacity: 0;
+  transition: transform 0.4s 0.05s var(--ease-out), opacity 0.3s 0.05s;
+  min-width: 0;
+}
+
+.player.open .tape-info {
+  transform: none;
+  opacity: 1;
+}
+
+.player-close {
+  position: absolute;
+  top: -36px;
+  right: -8px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--line-2);
+  background: var(--plastic-hi);
+  display: grid;
+  place-items: center;
+}
+
+.player-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.tape-channel {
+  margin: 0 0 4px;
+  color: var(--ink-2);
+  font-weight: 600;
+}
+
+.tape-title {
+  margin: 0 0 22px;
+  font-family: var(--hand);
+  font-size: 27px;
+  line-height: 1.15;
+  font-weight: 600;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.tape-details {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 8px 16px;
+  margin: 0 0 26px;
+  font-size: 14px;
+}
+
+.tape-details dt {
+  color: var(--ink-3);
+}
+
+.tape-details dd {
+  margin: 0;
+}
+
+.tape-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.tape-file {
+  margin-top: auto;
+  padding-top: 20px;
+  font-size: 12px;
+  color: var(--ink-3);
+  overflow-wrap: anywhere;
+  user-select: text;
+}
+
+@media (max-width: 1000px) {
+  .player {
+    grid-template-columns: 1fr;
+    align-content: start;
+    overflow-y: auto;
+  }
+  .player-close {
+    top: 0;
+    right: 0;
+  }
+}

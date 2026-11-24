@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rewind</title>
+  </head>
+  <body>
+    <div id="app">
+      <header class="titlebar" data-tauri-drag-region>
+        <div class="brand" data-tauri-drag-region>
+          <span class="brand-mark" aria-hidden="true"><i></i><i></i></span>
+          <span class="brand-name" data-tauri-drag-region>Rewind</span>
+          <span class="brand-model" data-tauri-drag-region>VR-26 live stream recorder</span>
+        </div>
+        <div class="win-buttons">
+          <button class="win-btn" id="win-min" aria-label="Minimize"><svg viewBox="0 0 12 12"><path d="M2 6h8"/></svg></button>
+          <button class="win-btn" id="win-max" aria-label="Maximize"><svg viewBox="0 0 12 12"><rect x="2.5" y="2.5" width="7" height="7" rx="1"/></svg></button>
+          <button class="win-btn close" id="win-close" aria-label="Close to tray"><svg viewBox="0 0 12 12"><path d="M3 3l6 6M9 3l-6 6"/></svg></button>
+        </div>
+      </header>
+
+      <section class="deck" aria-label="Recorder status">
+        <div class="vfd" id="vfd">
+          <div class="vfd-glass">
+            <div class="vfd-left">
+              <div class="vfd-flags">
+                <span class="flag rec" id="flag-rec">REC</span>
+                <span class="flag" id="flag-watch">TIMER</span>
+                <span class="flag" id="flag-pause">PAUSE</span>
+              </div>
+              <div class="vfd-clock" id="vfd-clock" aria-label="Clock"></div>
+            </div>
+            <div class="vfd-right">
+              <div class="vfd-ticker"><span id="vfd-ticker">Hello</span></div>
+              <div class="vfd-counters">
+                <div><b id="count-live">0</b><span>live now</span></div>
+                <div><b id="count-rec">0</b><span>recording</span></div>
+                <div><b id="count-tapes">0</b><span>tapes</span></div>
+                <div><b id="count-free">--</b><span>space left</span></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="slot" id="slot" aria-hidden="true">
+          <div class="slot-flap"></div>
+          <div class="slot-tape"></div>
+          <div class="slot-led" id="slot-led"></div>
+        </div>
+      </section>
+
+      <nav class="keys" aria-label="Sections">
+        <div class="key-row" role="tablist">
+          <button class="key" role="tab" data-view="channels" aria-selected="true"><span class="key-face">Channels</span></button>
+          <button class="key" role="tab" data-view="tapes" aria-selected="false"><span class="key-face">Tapes</span></button>
+          <button class="key" role="tab" data-view="setup" aria-selected="false"><span class="key-face">Setup</span></button>
+        </div>
+        <button class="pause-switch" id="pause-switch" aria-pressed="false">
+          <span class="switch-track"><span class="switch-knob"></span></span>
+          <span class="switch-label" id="pause-label">Watching</span>
+        </button>
+      </nav>
+
+      <main class="screen" id="screen">
+        <section class="view" id="view-channels" data-view="channels"></section>
+        <section class="view" id="view-tapes" data-view="tapes" hidden></section>
+        <section class="view" id="view-setup" data-view="setup" hidden></section>
+      </main>
+
+      <div class="osd-stack" id="osd" aria-live="polite"></div>
+    </div>
+    <div class="boot" id="boot" aria-hidden="true"><div class="boot-line"></div></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

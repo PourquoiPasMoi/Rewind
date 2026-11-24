@@ -1,0 +1,43 @@
+[package]
+name = "rewind"
+version = "1.0.0"
+edition = "2021"
+description = "Rewind - a VCR for live streams (Twitch + YouTube)"
+publish = false
+
+[[bin]]
+name = "Rewind"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2.7", features = [] }
+
+[dependencies]
+tauri = { version = "2.12", features = ["tray-icon", "protocol-asset", "image-png"] }
+tauri-plugin-single-instance = "2"
+tauri-plugin-autostart = "2"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "process", "sync", "io-util", "fs"] }
+reqwest = { version = "0.12", default-features = false, features = ["rustls-tls", "gzip", "brotli", "json"] }
+regex = "1"
+chrono = { version = "0.4", features = ["serde"] }
+rfd = "0.15"
+windows-sys = { version = "0.61", features = [
+    "Win32_Foundation",
+    "Win32_Security",
+    "Win32_System_JobObjects",
+    "Win32_System_Registry",
+    "Win32_Storage_FileSystem",
+    "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+] }
+
+[profile.release]
+# Small, fast exe: one codegen unit, link-time optimisation, no debug symbols.
+codegen-units = 1
+lto = true
+opt-level = 3
+panic = "abort"
+strip = true

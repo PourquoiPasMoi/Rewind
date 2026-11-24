@@ -1,0 +1,713 @@
+/* ---------------------------------------------------------------- label maker */
+
+.labeler-wrap {
+  margin-bottom: 34px;
+}
+
+.labeler {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  max-width: 760px;
+}
+
+.labeler-body {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px 8px 12px;
+  border-radius: 16px 10px 10px 16px;
+  background: linear-gradient(180deg, #3c3631, #2a2622);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08), 0 3px 0 #141210, 0 6px 14px rgba(0, 0, 0, 0.35);
+}
+
+/* The letter wheel of the label maker. */
+.labeler-dial {
+  width: 38px;
+  height: 38px;
+  flex: none;
+  border-radius: 50%;
+  background:
+    repeating-conic-gradient(from 0deg, #4d4640 0 6deg, #2d2925 6deg 12deg);
+  box-shadow: inset 0 0 0 5px #24201c, 0 1px 0 rgba(255, 255, 255, 0.08);
+  transition: transform 0.6s var(--ease-out);
+}
+
+.labeler:focus-within .labeler-dial {
+  transform: rotate(60deg);
+}
+
+.labeler.busy .labeler-dial {
+  animation: spin 0.7s linear infinite;
+}
+
+/* Embossed plastic label tape. */
+.labeler-tape {
+  flex: 1;
+  min-width: 0;
+  border-radius: 4px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.16), transparent 40%, rgba(0, 0, 0, 0.18)),
+    #c41f2c;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.25), 0 1px 0 rgba(255, 255, 255, 0.08);
+  clip-path: polygon(0 0, 100% 0, 98.6% 50%, 100% 100%, 0 100%, 1.4% 50%);
+}
+
+.labeler-input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  padding: 10px 22px;
+  font-size: 17px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: #fff4f0;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.35), 0 1px 0 rgba(255, 255, 255, 0.35);
+  user-select: text;
+}
+
+.labeler-input::placeholder {
+  color: rgba(255, 238, 232, 0.55);
+  text-shadow: none;
+  font-weight: 600;
+}
+
+.punch {
+  border: 0;
+  border-radius: 10px 16px 16px 10px;
+  padding: 0 22px;
+  background: linear-gradient(180deg, #1c1a18, #0f0e0d);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.1), 0 4px 0 #050404, 0 6px 12px rgba(0, 0, 0, 0.4);
+  font-weight: 700;
+  font-size: 15px;
+  color: var(--ink);
+  transform: translateY(-2px);
+  transition: transform 0.1s, box-shadow 0.1s;
+}
+
+.punch:active,
+.labeler.punched .punch {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 0 #050404, 0 2px 4px rgba(0, 0, 0, 0.4);
+}
+
+.labeler.punched .labeler-tape {
+  animation: punchTape 0.35s steps(3);
+}
+
+.labeler.jam {
+  animation: jam 0.4s ease-in-out;
+}
+
+.labeler-hint {
+  margin: 12px 0 0 4px;
+  font-size: 13.5px;
+  color: var(--ink-3);
+}
+
+@keyframes punchTape {
+  50% { filter: brightness(1.25); transform: translateX(3px); }
+}
+
+@keyframes jam {
+  20%, 60% { transform: translateX(-7px); }
+  40%, 80% { transform: translateX(7px); }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------------------------------------------------------------- cassettes */
+
+.cassette-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 38px 30px;
+  align-items: start;
+}
+
+.cassette-card {
+  --label: var(--c0);
+  --wind: 0.05;
+  min-width: 0;
+}
+
+.cassette {
+  position: relative;
+  aspect-ratio: 100 / 64;
+  border-radius: 12px;
+  padding: 6.5% 5.5% 0;
+  background:
+    linear-gradient(160deg, rgba(255, 255, 255, 0.06), transparent 35%),
+    linear-gradient(180deg, #37322d, #26221e);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+    0 10px 24px -8px rgba(0, 0, 0, 0.7),
+    0 2px 0 #141210;
+  transition: transform 0.35s var(--spring), box-shadow 0.35s;
+}
+
+.cassette-card:hover .cassette {
+  transform: translateY(-3px) rotate(-0.4deg);
+}
+
+.screw {
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 40% 35%, #8d857a, #4a443d 60%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+.screw::after {
+  content: "";
+  position: absolute;
+  inset: 4px 1px;
+  background: rgba(0, 0, 0, 0.5);
+  transform: rotate(35deg);
+}
+
+.s1 { top: 7px; left: 7px; }
+.s2 { top: 7px; right: 7px; }
+.s3 { bottom: 7px; left: 7px; }
+.s4 { bottom: 7px; right: 7px; }
+
+.label {
+  position: relative;
+  height: 74%;
+  border-radius: 7px;
+  background: var(--paper);
+  overflow: hidden;
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.08);
+}
+
+.label-band {
+  height: 23%;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 0 10px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), transparent),
+    var(--label);
+  color: #15120f;
+}
+
+.label-side {
+  width: 19px;
+  height: 19px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #15120f;
+  color: var(--paper);
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.label-platform svg {
+  width: 15px;
+  height: 15px;
+}
+
+.label-brand {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  font-variation-settings: "wdth" 80;
+}
+
+.label-paper {
+  padding: 3px 96px 0 13px;
+  height: 40%;
+  background: repeating-linear-gradient(180deg, transparent 0 21px, rgba(31, 58, 147, 0.16) 21px 22px);
+  background-position: 0 3px;
+}
+
+.label-name {
+  font-family: var(--hand);
+  font-size: 25px;
+  line-height: 1.05;
+  font-weight: 600;
+  color: var(--pen);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: rotate(-1.4deg);
+  transform-origin: left center;
+}
+
+.label-sub {
+  font-family: var(--hand);
+  font-size: 14px;
+  line-height: 1.3;
+  color: var(--pen);
+  opacity: 0.72;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transform: rotate(-0.8deg);
+  transform-origin: left center;
+  margin-top: 2px;
+}
+
+/* The window with the two reels. */
+.window {
+  position: absolute;
+  left: 50%;
+  bottom: 9%;
+  width: 58%;
+  height: 31%;
+  transform: translateX(-50%);
+  border-radius: 9px;
+  background: #140f0c;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.8), 0 0 0 3px rgba(21, 18, 15, 0.12);
+  overflow: hidden;
+}
+
+.reel {
+  position: absolute;
+  top: 50%;
+  height: 84%;
+  aspect-ratio: 1;
+  transform: translate(-50%, -50%);
+}
+
+.reel.left { left: 22%; }
+.reel.right { left: 78%; }
+
+/* Tape wound on each reel: left empties, right fills while recording. */
+.pack {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  background: radial-gradient(circle, #5a3e2b 0 40%, #3d2a1d 41% 100%);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.4);
+  transform: translate(-50%, -50%);
+  transition: width 1s linear, height 1s linear;
+}
+
+.reel.left .pack {
+  width: calc(100% + 90% * (1 - var(--wind)));
+  height: calc(100% + 90% * (1 - var(--wind)));
+}
+
+.reel.right .pack {
+  width: calc(100% + 90% * var(--wind));
+  height: calc(100% + 90% * var(--wind));
+}
+
+.hub {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.hub-ring {
+  fill: #ece4d3;
+}
+
+.hub-teeth rect {
+  fill: #140f0c;
+}
+
+.hub-core {
+  fill: #140f0c;
+}
+
+.tape-run {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 6%;
+  height: 4px;
+  background: #3d2a1d;
+}
+
+.head {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 60%;
+  height: 15%;
+  transform: translateX(-50%);
+  background: linear-gradient(180deg, #2c2824, #1e1b18);
+  clip-path: polygon(7% 0, 93% 0, 100% 100%, 0 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18%;
+}
+
+.head-hole {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #0d0b0a;
+  box-shadow: inset 0 1px 2px #000;
+}
+
+.head-led {
+  position: absolute;
+  right: 12%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #3b1817;
+}
+
+/* Photo taped on the label: avatar, or the live picture while on air. */
+.photo {
+  position: absolute;
+  top: 11%;
+  right: 7%;
+  margin: 0;
+  width: 76px;
+  padding: 4px 4px 11px;
+  background: #fbf8f1;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  transform: rotate(4deg);
+  transition: width 0.4s var(--spring), transform 0.4s var(--spring);
+  z-index: 2;
+}
+
+.photo.wide {
+  width: 116px;
+  transform: rotate(3deg) translateY(-4px);
+}
+
+.photo-img {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: cover;
+  background: #d9d2c4;
+}
+
+.photo.wide .photo-img {
+  aspect-ratio: 16 / 9;
+}
+
+.photo.empty,
+.photo.broken .photo-img {
+  visibility: hidden;
+}
+
+.photo-tape {
+  position: absolute;
+  top: -7px;
+  left: 50%;
+  width: 40px;
+  height: 14px;
+  margin-left: -20px;
+  background: rgba(255, 250, 225, 0.55);
+  box-shadow: 0 1px 1px rgba(0, 0, 0, 0.08);
+  transform: rotate(-6deg);
+}
+
+/* Rubber stamp. */
+.stamp {
+  position: absolute;
+  left: 9%;
+  top: 46%;
+  padding: 1px 9px 0;
+  border: 3px solid currentColor;
+  border-radius: 5px;
+  font-weight: 800;
+  font-size: 19px;
+  letter-spacing: 0.08em;
+  color: var(--rec);
+  transform: rotate(-11deg);
+  mix-blend-mode: multiply;
+  opacity: 0.85;
+  z-index: 3;
+  pointer-events: none;
+}
+
+.stamp:empty {
+  display: none;
+}
+
+.is-recording .stamp,
+.is-live .stamp,
+.is-holding .stamp {
+  animation: stampIn 0.35s var(--spring) both;
+}
+
+.is-holding .stamp,
+.is-saving .stamp {
+  color: #c77800;
+}
+
+.is-live .stamp {
+  color: #d63f6e;
+  border-style: dashed;
+}
+
+@keyframes stampIn {
+  from { transform: rotate(-11deg) scale(1.8); opacity: 0; }
+  to { transform: rotate(-11deg) scale(1); opacity: 0.85; }
+}
+
+/* States. */
+.is-recording .hub {
+  animation: spin 1.8s linear infinite;
+}
+
+.is-saving .hub {
+  animation: spin 0.45s linear infinite reverse;
+}
+
+.is-recording .head-led {
+  background: var(--rec);
+  box-shadow: 0 0 8px 2px rgba(255, 58, 63, 0.75);
+  animation: blink 1.1s steps(1) infinite;
+}
+
+.is-recording .cassette {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    inset 0 -2px 0 rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255, 58, 63, 0.55),
+    0 18px 40px -14px rgba(255, 58, 63, 0.55),
+    0 2px 0 #141210;
+}
+
+.is-holding .cassette {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.1),
+    0 0 0 1px rgba(255, 181, 71, 0.45),
+    0 2px 0 #141210;
+}
+
+.is-off .cassette {
+  filter: saturate(0.25) brightness(0.8);
+}
+
+.inserting .cassette {
+  animation: insertTape 0.65s var(--spring) both;
+}
+
+@keyframes insertTape {
+  from { transform: translateY(-46px) rotate(-7deg) scale(0.94); opacity: 0; }
+  to { transform: none; opacity: 1; }
+}
+
+/* Footer under each cassette. */
+.card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 2px 0;
+}
+
+.card-text {
+  min-width: 0;
+}
+
+.card-status {
+  font-weight: 600;
+  font-size: 15.5px;
+  white-space: nowrap;
+}
+
+.is-recording .card-status {
+  color: #ff7376;
+  font-variant-numeric: tabular-nums;
+}
+
+.is-live .card-status {
+  color: #ff8fb0;
+}
+
+.is-holding .card-status {
+  color: var(--amber);
+}
+
+.card-meta {
+  font-size: 13px;
+  color: var(--ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-meta.error {
+  color: #ff9d8a;
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.card-actions {
+  display: flex;
+  gap: 6px;
+  flex: none;
+}
+
+.tape-btn {
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--plastic-hi);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 2px 0 #151311;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 11px;
+  color: var(--ink-2);
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: transform 0.08s, background 0.2s;
+}
+
+.tape-btn svg {
+  width: 14px;
+  height: 14px;
+  flex: none;
+}
+
+.tape-btn.icon {
+  width: 32px;
+  padding: 0;
+}
+
+.tape-btn:hover {
+  background: #463f38;
+  color: var(--ink);
+}
+
+.tape-btn:active {
+  transform: translateY(2px);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04), 0 0 0 #151311;
+}
+
+.tape-btn.primary svg {
+  color: var(--rec);
+}
+
+.tape-btn.primary.danger {
+  background: var(--rec);
+  border-color: var(--rec);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.25), 0 2px 0 #7d1517;
+}
+
+.tape-btn.primary.danger svg {
+  color: #fff;
+}
+
+.tape-btn.off {
+  color: var(--amber);
+}
+
+/* ---------------------------------------------------------------- options popover */
+
+.pop {
+  position: fixed;
+  z-index: 90;
+  width: 220px;
+  padding: 14px;
+  border-radius: 12px;
+  background: #26221e;
+  border: 1px solid var(--line-2);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.7);
+  animation: popIn 0.18s var(--ease-out) both;
+}
+
+.pop-title {
+  margin: 0 0 10px;
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.pop-swatches {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.swatch {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--sw);
+  box-shadow: inset 0 -3px 0 rgba(0, 0, 0, 0.2);
+  transition: transform 0.15s var(--spring);
+}
+
+.swatch:hover {
+  transform: scale(1.12);
+}
+
+.swatch[aria-pressed="true"] {
+  box-shadow: 0 0 0 2px #26221e, 0 0 0 4px var(--ink);
+}
+
+.pop-remove {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: #ffb3a8;
+  font-size: 13.5px;
+  font-weight: 600;
+}
+
+.pop-remove svg {
+  width: 14px;
+  height: 14px;
+}
+
+.pop-remove.armed {
+  background: var(--rec);
+  border-color: var(--rec);
+  color: #fff;
+}
+
+@keyframes popIn {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+/* ---------------------------------------------------------------- empty shelf drawing */
+
+.empty-cassette {
+  width: 150px;
+  height: 96px;
+  border-radius: 10px;
+  border: 2px dashed #4a433c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 34px;
+}
+
+.empty-cassette i {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 2px dashed #4a433c;
+}
+
+@media (max-width: 720px) {
+  .labeler {
+    flex-direction: column;
+  }
+  .punch {
+    height: 44px;
+  }
+}
