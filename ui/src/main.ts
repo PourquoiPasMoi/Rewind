@@ -8,7 +8,7 @@ import "./styles/setup.css";
 
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { api, type Snapshot } from "./api";
+import { api, type Snapshot, type UpdateInfo } from "./api";
 import { ChannelsView } from "./channels";
 import { Deck } from "./deck";
 import { osd, type OsdKind } from "./osd";
@@ -115,6 +115,21 @@ async function start() {
     void refreshDisk();
   });
   await listen<{ kind: OsdKind; text: string }>("toast", (e) => osd(e.payload.text, e.payload.kind));
+  await listen<UpdateInfo>("update-available", (e) => {
+    const info = e.payload;
+    setup.setUpdate(info);
+    deck.setUpdate(info.version);
+    // Tell once per version; after that the display and Setup keep showing it.
+    let told = "";
+    try {
+      told = localStorage.getItem("rewind.toldUpdate") ?? "";
+      localStorage.setItem("rewind.toldUpdate", info.version);
+    } catch {
+      /* storage unavailable: just tell again */
+    }
+    if (told !== info.version) osd(`Rewind ${info.version} is out. Install it from Setup.`, "info", 7000);
+  });
+  await listen<{ received?: number; total?: number | null; stage?: string }>("update-progress", (e) => setup.progress(e.payload));
   await listen<{ received: number; total: number | null }>("tool-progress", (e) => {
     const { received, total } = e.payload;
     const btn = document.querySelector<HTMLButtonElement>(".osd-btn.strong[disabled]");

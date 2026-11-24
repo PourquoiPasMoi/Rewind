@@ -40,8 +40,16 @@ npm install
 npx tauri dev
 ```
 
-Release build:
+## Releasing
+
+1. Bump the version in `package.json`, `src-tauri/Cargo.toml` and `src-tauri/tauri.conf.json`, then commit.
+2. Write the release notes in a file, then run:
 
 ```powershell
-npx tauri build
+node scripts/release.mjs notes.md
 ```
+
+This builds in `target-build`, signs the installer with the updater key
+(`%USERPROFILE%\.tauri\rewind-updater.key`, never commit it, back it up), copies the files to
+`releases\v<version>\`, writes `latest.json` and publishes the GitHub release. Installed copies
+of Rewind see the new version through `latest.json`. Without the key, installed apps can't update.

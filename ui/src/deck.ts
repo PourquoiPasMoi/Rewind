@@ -14,6 +14,12 @@ export class Deck {
   private msgIndex = 0;
   private booting = true;
   private tapes = 0;
+  private newVersion: string | null = null;
+
+  setUpdate(version: string | null) {
+    this.newVersion = version;
+    this.messages = this.buildMessages();
+  }
 
   constructor() {
     this.seg.show("1200");
@@ -87,6 +93,7 @@ export class Deck {
         if (this.tapes) out.push(`${this.tapes} tape${this.tapes === 1 ? "" : "s"} on the shelf`);
       }
     }
+    if (this.newVersion) out.push(`Update ${this.newVersion} ready in Setup`);
     return out;
   }
 

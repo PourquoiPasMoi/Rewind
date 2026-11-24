@@ -63,6 +63,13 @@ export interface Settings {
   keepDays: number;
   sounds: boolean;
   paused: boolean;
+  autoUpdate: boolean;
+}
+
+export interface UpdateInfo {
+  version: string;
+  current: string;
+  notes?: string | null;
 }
 
 export interface Tape {
@@ -115,6 +122,9 @@ export const api = {
   updateYtDlp: () => invoke<string>("update_yt_dlp"),
   installFfmpeg: () => invoke<void>("install_ffmpeg"),
   disk: () => invoke<{ free: number; total: number } | null>("disk_info"),
+  checkUpdate: () => invoke<UpdateInfo | null>("check_update"),
+  installUpdate: (force: boolean) => invoke<void>("install_update", { force }),
+  version: () => invoke<{ version: string }>("launch_info").then((r) => r.version),
   quit: () => invoke<void>("quit_app"),
   hide: () => invoke<void>("hide_window"),
 };

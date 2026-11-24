@@ -1,6 +1,6 @@
 // Setup: the blue on-screen menu every VCR had. Arrow keys move the bar, left/right change values.
 
-import { api, errorText, type Settings, type Tools } from "./api";
+import { api, errorText, type Settings, type Tools, type UpdateInfo } from "./api";
 import { osd } from "./osd";
 import * as sound from "./sound";
 import { el } from "./util";
@@ -50,6 +50,11 @@ export class SetupView {
   private active = 0;
   /** Last helper download error: stays on screen (a toast is too easy to miss). */
   private toolError: string | null = null;
+  private version = "";
+  private update: UpdateInfo | null = null;
+  private updateBusy = false;
+  private updateNote: string | null = null;
+  private updateArmed = false;
   onSettings: (s: Settings) => void = () => {};
 
   constructor(host: HTMLElement) {
@@ -63,8 +68,25 @@ export class SetupView {
     if (changed && this.settings) this.render();
   }
 
+  setUpdate(info: UpdateInfo | null) {
+    this.update = info;
+    if (this.settings) this.render();
+  }
+
+  /** Download / save / install progress from the Rust side. */
+  progress(p: { received?: number; total?: number | null; stage?: string }) {
+    const btn = this.host.querySelector<HTMLButtonElement>(".update-btn");
+    if (!btn) return;
+    if (p.stage === "saving") btn.textContent = "Saving your tapes";
+    else if (p.stage === "installing") btn.textContent = "Installing, Rewind restarts";
+    else if (p.received !== undefined) {
+      btn.textContent = p.total ? `Downloading ${Math.round((p.received / p.total) * 100)}%` : `Downloading ${Math.round(p.received / 1048576)} MB`;
+    }
+  }
+
   async load() {
     try {
+      this.version ||= await api.version();
       const [settings, tools] = await Promise.all([api.settings(), api.tools()]);
       this.settings = settings;
       this.tools = tools;
@@ -133,6 +155,7 @@ export class SetupView {
           s.keepDays ? "Old tapes are deleted for good, not moved to the recycle bin" : "Tapes stay until you delete them"),
         this.choice("sounds", "Button sounds", ON_OFF, s.sounds, (v) => this.save({ sounds: v })),
       ),
+      this.updates(s),
       this.helpers(),
       el("div", { class: "osd-foot" }, this.quitButton()),
     );
@@ -185,6 +208,69 @@ export class SetupView {
       }
     };
     return row;
+  }
+
+  private updates(s: Settings): HTMLElement {
+    const control = el("div", { class: "osd-folder" });
+    let note: string;
+    if (this.update) {
+      const install = el("button", { class: "osd-btn strong update-btn", text: this.updateArmed ? "Stop recording and update" : "Install update" });
+      install.disabled = this.updateBusy;
+      install.addEventListener("click", async () => {
+        sound.click();
+        this.updateBusy = true;
+        this.updateNote = null;
+        install.disabled = true;
+        install.textContent = "Downloading";
+        try {
+          await api.installUpdate(this.updateArmed);
+        } catch (e) {
+          const text = errorText(e);
+          this.updateBusy = false;
+          if (text === "recording") {
+            this.updateArmed = true;
+            this.updateNote = "A stream is being recorded. Updating stops it and saves the tape first. Click again to update now.";
+          } else {
+            this.updateArmed = false;
+            this.updateNote = text;
+          }
+          this.render();
+        }
+      });
+      control.append(el("span", { class: "osd-ok", text: `Version ${this.update.version} is ready` }), install);
+      const notes = (this.update.notes ?? "").replace(/[*#`]/g, "").split("\n").map((l) => l.trim()).find((l) => l.length > 0);
+      note = `You have ${this.version}.${notes ? ` ${notes}` : ""}`;
+    } else {
+      const check = el("button", { class: "osd-btn", text: this.updateBusy ? "Checking" : "Check now" });
+      check.disabled = this.updateBusy;
+      check.addEventListener("click", async () => {
+        sound.click();
+        this.updateBusy = true;
+        this.updateNote = null;
+        this.render();
+        try {
+          this.update = await api.checkUpdate();
+          if (!this.update) this.updateNote = "You have the newest version.";
+        } catch (e) {
+          this.updateNote = errorText(e);
+        }
+        this.updateBusy = false;
+        this.render();
+      });
+      control.append(el("span", { text: `Version ${this.version}` }), check);
+      note = "Updates come from Rewind's GitHub page and are checked for Rewind's signature before installing";
+    }
+    const row = this.row("update", "Rewind version", control, note);
+    if (this.updateNote) {
+      const good = this.updateNote.startsWith("You have the newest");
+      row.append(el("span", { class: good ? "menu-note" : "menu-note menu-error", role: "status", text: this.updateNote }));
+    }
+    return el("div", { class: "osd-group" },
+      el("h3", { class: "osd-sub", text: "Updates" }),
+      row,
+      this.choice("autoupdate", "Check for updates automatically", ON_OFF, s.autoUpdate, (v) => this.save({ autoUpdate: v }),
+        "A tiny check (about 1 KB) when Rewind starts and every 6 hours. Nothing installs without your click."),
+    );
   }
 
   private helpers(): HTMLElement {

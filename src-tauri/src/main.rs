@@ -8,6 +8,7 @@ mod recorder;
 mod store;
 mod tools;
 mod tray;
+mod updater;
 mod winutil;
 
 use recorder::Shared;
@@ -19,6 +20,8 @@ use tauri::{Manager, RunEvent, WindowEvent};
 fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| tray::show_main(app)))
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .manage(updater::Pending::default())
         .setup(|app| {
             let handle = app.handle().clone();
             let config_dir = app.path().app_config_dir()?;
@@ -46,6 +49,7 @@ fn main() {
                     let _ = window.show();
                 }
             }
+            tauri::async_runtime::spawn(updater::background(handle.clone(), shared.clone()));
             tauri::async_runtime::spawn(recorder::run(handle, shared));
             Ok(())
         })
@@ -87,6 +91,8 @@ fn main() {
             commands::install_ffmpeg,
             commands::disk_info,
             commands::launch_info,
+            commands::check_update,
+            commands::install_update,
             commands::quit_app,
             commands::hide_window,
         ])

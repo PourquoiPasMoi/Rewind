@@ -64,6 +64,10 @@ impl Shared {
         }
     }
 
+    pub fn sessions_in(&self, states: &[SessionState]) -> usize {
+        self.sessions.lock().unwrap().values().filter(|s| states.contains(&s.state)).count()
+    }
+
     pub fn save_store(&self) -> Result<(), String> {
         let store = self.store.lock().unwrap().clone();
         store.save(&self.store_path)
@@ -847,6 +851,17 @@ pub fn active_count(sh: &Shared) -> usize {
 
 /// Quit: stop every recorder, save every open tape, then exit.
 pub async fn shutdown(app: AppHandle, sh: Arc<Shared>) {
+    if sh.quitting.load(Ordering::Relaxed) {
+        return;
+    }
+    save_all(&app, &sh).await;
+    app.exit(0);
+}
+
+/// Stops the watcher and every recorder and saves all open tapes (used by quit and updates).
+pub async fn save_all(app: &AppHandle, sh: &Arc<Shared>) {
+    let app = app.clone();
+    let sh = sh.clone();
     if sh.quitting.swap(true, Ordering::Relaxed) {
         return;
     }
@@ -883,7 +898,6 @@ pub async fn shutdown(app: AppHandle, sh: Arc<Shared>) {
         }
         tokio::time::sleep(Duration::from_millis(100)).await;
     }
-    app.exit(0);
 }
 
 pub fn store_of(app: &AppHandle) -> Arc<Shared> {

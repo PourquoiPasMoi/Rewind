@@ -1,6 +1,6 @@
 [package]
 name = "rewind"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 description = "Rewind - a VCR for live streams (Twitch + YouTube)"
 publish = false
@@ -15,7 +15,7 @@ tauri-build = { version = "2.7", features = [] }
 [dependencies]
 tauri = { version = "2.12", features = ["tray-icon", "protocol-asset", "image-png"] }
 tauri-plugin-single-instance = "2"
-tauri-plugin-autostart = "2"
+tauri-plugin-updater = "2"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "time", "process", "sync", "io-util", "fs"] }

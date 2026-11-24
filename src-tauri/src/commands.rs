@@ -283,6 +283,16 @@ pub fn launch_info() -> serde_json::Value {
 }
 
 #[tauri::command]
+pub async fn check_update(app: AppHandle) -> R<Option<crate::updater::UpdateInfo>> {
+    crate::updater::check(&app).await
+}
+
+#[tauri::command]
+pub async fn install_update(app: AppHandle, sh: Sh<'_>, force: bool) -> R<()> {
+    crate::updater::install(app, sh.inner().clone(), force).await
+}
+
+#[tauri::command]
 pub fn quit_app(app: AppHandle, sh: Sh) {
     tauri::async_runtime::spawn(recorder::shutdown(app.clone(), sh.inner().clone()));
 }

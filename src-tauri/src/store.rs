@@ -69,6 +69,7 @@ pub struct Settings {
     pub keep_days: u64,
     pub sounds: bool,
     pub paused: bool,
+    pub auto_update: bool,
 }
 
 impl Default for Settings {
@@ -84,6 +85,7 @@ impl Default for Settings {
             keep_days: 0,
             sounds: true,
             paused: false,
+            auto_update: true,
         }
     }
 }
