@@ -1,6 +1,6 @@
 [package]
 name = "rewind"
-version = "1.0.4"
+version = "1.0.5"
 edition = "2021"
 description = "Rewind - a VCR for live streams (Twitch + YouTube)"
 publish = false

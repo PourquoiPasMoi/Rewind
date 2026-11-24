@@ -146,6 +146,22 @@
   display: inline-block;
 }
 
+/* Messages on the display: REC in red, problems in amber. */
+.vfd-ticker span[data-kind="rec"] {
+  color: #ff5559;
+  text-shadow: 0 0 10px rgba(255, 58, 63, 0.75);
+}
+
+.vfd-ticker span[data-kind="error"] {
+  color: var(--amber);
+  text-shadow: 0 0 10px rgba(255, 181, 71, 0.6);
+}
+
+.vfd-ticker span[data-kind="saved"]::before,
+.vfd-ticker span[data-kind="rec"]::before {
+  content: "\25CF  ";
+}
+
 .vfd-ticker span.flip {
   animation: tickerIn 0.35s steps(5) both;
 }

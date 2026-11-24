@@ -29,10 +29,41 @@ export class Deck {
     this.messages = this.buildMessages();
   }
 
+  /** Messages shown on the display for a few seconds, one after another (osd.ts sends them). */
+  private flashes: { text: string; kind: string; ms: number }[] = [];
+  private flashing = false;
+
   constructor() {
     this.seg.show("1200");
     setInterval(() => this.everySecond(), 1000);
     setInterval(() => this.rotate(), 4500);
+    window.addEventListener("rewind-flash", (e) => {
+      const { text, kind, ms } = (e as CustomEvent<{ text: string; kind: string; ms: number }>).detail;
+      // The same message twice in a row is shown once.
+      if (this.flashes.some((f) => f.text === text)) return;
+      this.flashes.push({ text, kind, ms });
+      if (this.flashes.length > 4) this.flashes.shift();
+      if (!this.flashing && !this.booting) this.nextFlash();
+    });
+  }
+
+  private nextFlash() {
+    const node = $("vfd-ticker");
+    const flash = this.flashes.shift();
+    if (!flash) {
+      this.flashing = false;
+      node.dataset.kind = "";
+      this.messages = this.buildMessages();
+      this.renderTicker();
+      return;
+    }
+    this.flashing = true;
+    node.dataset.kind = flash.kind;
+    node.textContent = "";
+    this.setTicker(flash.text);
+    // A long message scrolls across first; give it time to be read.
+    const scrolling = node.classList.contains("scroll");
+    setTimeout(() => this.nextFlash(), scrolling ? Math.max(flash.ms, 9000) : Math.max(flash.ms, 4500));
   }
 
   /** Power-on: the classic blinking 12:00, then the real time. */
@@ -46,6 +77,7 @@ export class Deck {
     this.seg.blink(false);
     this.booting = false;
     this.everySecond();
+    if (this.flashes.length) this.nextFlash();
   }
 
   update(snap: Snapshot) {
@@ -63,7 +95,7 @@ export class Deck {
     $("flag-pause").classList.toggle("on", snap.paused);
     document.getElementById("slot")!.classList.toggle("loaded", recording.length > 0);
     this.messages = this.buildMessages();
-    if (!this.booting) this.renderTicker();
+    if (!this.booting && !this.flashing) this.renderTicker();
   }
 
   setTapes(count: number) {
@@ -122,6 +154,7 @@ export class Deck {
     const mm = String(now.getMinutes()).padStart(2, "0");
     this.seg.show(hh + mm);
     this.seg.colonOn(now.getSeconds() % 2 === 0);
+    if (this.flashing) return;
     // Keep the running REC timer live between snapshots.
     const current = this.messages[this.msgIndex % this.messages.length] ?? "";
     if (current.startsWith("●")) {
@@ -131,7 +164,7 @@ export class Deck {
   }
 
   private rotate() {
-    if (this.booting || this.messages.length < 2) return;
+    if (this.booting || this.flashing || this.messages.length < 2) return;
     this.msgIndex = (this.msgIndex + 1) % this.messages.length;
     this.renderTicker();
   }
